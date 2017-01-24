@@ -10,6 +10,10 @@ namespace BattPlot
 {
     public class HelperStatic
     {
+        static public void SkipModifier()
+        {
+
+        }
         /// <summary>
         /// Creates a directory for plots and the reporting
         /// </summary>

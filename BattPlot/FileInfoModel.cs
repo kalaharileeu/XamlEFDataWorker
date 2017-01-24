@@ -1,6 +1,4 @@
-﻿using System;
-using OxyPlot;
-using OxyPlot.Series;
+﻿using OxyPlot;
 using OxyPlot.Axes;
 using TestFileMiner;
 using System.Collections.Generic;

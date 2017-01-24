@@ -119,13 +119,86 @@ namespace BattPlot
             theChargeModel.Series.Add(lineseries);
         }
         /// <summary>
+        /// Add skip  data to the plot
+        /// </summary>
+        /// <param name="vColumns">reference var to data from CSV</param>
+        /// <param name="skipColumns">reference var to skip data</param>
+        public void AddSkipsLines(string dataY, List<Column> vColumns, List<Column> skipColumns)
+        {
+            //Y axis data: dataY and YColumn is the wanted Y axis data/plot
+            var Ycolumn = vColumns.Find(y => y.alias == dataY);
+            //no variable to comapre against for the accuracy varlues
+            if (Ycolumn.accuracystr == "")return;
+            //Copy constructor not not to have reference that is modified
+            List<float> Ycolumnfloats = new List<float>(Ycolumn.GetFloats);
+            //X axis data: xaxisPlotValue is selected by the user
+            var Xcolumnfloats = vColumns.Find(x => x.alias == xaxisPlotValues).GetFloats;
+            //Y axis compare data: compare values to set the amplitude of the skip plotted line
+            var Ycompare = vColumns.Find(ycomp => ycomp.alias == Ycolumn.accuracystr);
+            List<float> Ycomparefloats;
+            if (Ycolumn.accuracystr == "Phaseconfigured")
+            {
+                //Have to create this in order not to modify the original list pointed to
+                //copy constructor the dataYcompare list
+                Ycomparefloats = new List<float>(Ycompare.GetFloats);
+                //Modify the list values from degrees to power factor 
+                modifyPhaseconfigured(Ycomparefloats);
+            }
+            else
+            {
+                //get the Y compare data, copy constructor NOT used used
+                Ycomparefloats = Ycompare.GetFloats;
+            }
+
+            //Modify value if needed
+            //Special treatment for pf reporting accuracy, some conversions needed for pcu pf
+            if (Ycolumn.alias == "Powerfactorpcu")
+            {
+                //Get the data for "Powerfactorpcu" 
+                //dataYList = new List<float>(vColumn.GetFloats);
+                modifyPowerfactorpcu(Ycolumnfloats);//Send a reference to be modified
+            }
+            //Iac Apparant mods
+            if (dataY == "IacApparantpcu_calc")
+            {
+                //iacApparantpcu_calc is the real current measured by pcu,
+                // iacimagpcu is the imaginary part of the ac current from pcu, then calculate the apparant current
+                List<float> iacimagpcuData = (vColumns.Find(iimag => iimag.alias == "Iacimagpcu")).GetFloats;
+                Ycolumnfloats = HelperStatic.Get_pcu_apparantcurrent(iacimagpcuData, Ycolumn.GetFloats);
+            }
+
+            //For every skip column
+            for (int k = 0; k < skipColumns.Count; k++)
+            {
+                //Add a line series for xaxis value vs skip
+                var templine = new LineSeries() { Title = $"{skipColumns[k].alias} skip", MarkerSize = 2 };
+                //Look through the skip columns
+                for (int j = 0; j < skipColumns[k].GetFloats.Count; j++)
+                {
+                    //Work for all the skips in the list, 
+                    //if there is one add it, with xaxis value
+                    if (skipColumns[k].GetFloats[j] == 1f)
+                    {
+                        var Yamplitude = Ycolumnfloats[j] - Ycomparefloats[j];
+                        //Get the last inserted scatter series
+                        templine.Points.Add(new DataPoint(Xcolumnfloats[j], 0.0f));
+                        templine.Points.Add(new DataPoint(Xcolumnfloats[j], Yamplitude));
+                        templine.Points.Add(new DataPoint(Xcolumnfloats[j], 0.0f));
+                    }
+                }
+                theChargeModel.Series.Add(templine);
+            }
+            //Refresh the plot
+            theChargeModel.InvalidatePlot(true);
+        }
+        /// <summary>
         /// The is effectively just for accuracy plots, prefetch acpower to plot against
         /// MainWindow.xaml calls this to add a plot to PlotView Model
         /// The valuelists contains reference to all data, name to plot
         /// </summary>
         /// <param name="dataY">String alias name for csv data, Y data name</param>
         /// <param name="valuelists">List of IBaselist</param>
-        public void addScatterSeries(string dataY, /*List<IBaselist> valuelists,*/ List<Column> vList)
+        public void addScatterSeries(string dataY, List<Column> vList)
         {
             if (vList == null) return;
             //List<float> dataXList = new List<float>();
@@ -147,7 +220,6 @@ namespace BattPlot
             //Iterate through the list of Column to further work the data
             foreach (var vColumn in vList)
             {
-
                 //get the value list with the requested name for y axis
                 //if there is a accuracy column related to this column(see xml) get that column too
                 if (vColumn.alias == dataY)
@@ -158,7 +230,7 @@ namespace BattPlot
                     {
                         //Get the data for "Powerfactorpcu" 
                         dataYList = new List<float>(vColumn.GetFloats);
-                        modifyPowerfactorpcu(dataYList);//Send a reference to ne modified
+                        modifyPowerfactorpcu(dataYList);//Send a reference to be modified
                     }
                     else if (dataY == "IacApparantpcu_calc")
                     {
@@ -180,7 +252,7 @@ namespace BattPlot
                         //Getaccuracystr gets the string "accuracystr" property, it is most likely
                         //a pm object "alias" - property
                         //to for accuracy, find the right set of data to compare accuracy too
-                        //The data in in the datainterface can now be use for accuracy calculations
+                        //The data in the datainterface used for accuracy calculations
                         //Find the data interface with the same name as the valuelist accuracy dependency
                         var compareColumn = vList.Find(x => x.alias == vColumn.accuracystr);
                         //Some special treatment for cfg_phase, fin it and deal with it
@@ -203,7 +275,7 @@ namespace BattPlot
             //populate the plot values in this datamodel
             populateACpowerVSyvalue(dataXList, dataYList, dataYcompare, vList);
             //Invalidate to refresh graph
-            theChargeModel.InvalidatePlot(true);
+            //theChargeModel.InvalidatePlot(true);
         }
 
         //Modify the power factor pcu value ex.  -45deg to 0.707
@@ -235,8 +307,8 @@ namespace BattPlot
             Title = theChargeModel.Title;
         }
 
-        //plot acpowermeter againsome other value
-        private void populateACpowerVSyvalue(List<float> valueX, List<float> valueY, List<float>valueYcompare/*, List<IBaselist> datalistInterfaces*/, List<Column> vList)
+        //plot acpowermeter againsome other value from csv. file
+        private void populateACpowerVSyvalue(List<float> valueX, List<float> valueY, List<float>valueYcompare, List<Column> vList)
         {
             ClearPlot();
             //lambda expressions here
@@ -245,7 +317,6 @@ namespace BattPlot
             //FILTER 1: Temperature
             //List<float> temprData = (datalistInterfaces.Find(x => x.GetName() == "Temperature")).GetFloats();
             List<float> temprData = (vList.Find(x => x.alias == "Temperature")).GetFloats;
-            //ScatterSeries acwPmSeries = new ScatterSeries { MarkerType = MarkerType.Circle, MarkerSize = 5, MarkerFill = OxyColors.IndianRed };
             //FILTER 2: Did not do power
             List<float> acwPmData = (vList.Find(x => x.alias == "Wacpowermeter")).GetFloats;
             ScatterSeries acwPmSeries = new ScatterSeries { Title = "No output Wac", MarkerType = MarkerType.Circle, MarkerSize = 5, MarkerFill = OxyColors.IndianRed };
@@ -268,7 +339,7 @@ namespace BattPlot
             //Real values the ones I actually want
             ScatterSeries acwFilteredSeries = new ScatterSeries { Title = "Nominal op. range", MarkerType = MarkerType.Circle, MarkerSize = 4, MarkerFill = OxyColors.Black };
 
-            //If there are the same amount of values in each list the go.
+            //If there are the same amount of values in each list then go.
             if (valueYcompare.Count == valueY.Count)
             {
                 //Apply the filters
@@ -404,7 +475,7 @@ namespace BattPlot
             //acwFilteredSeries.MouseDown += acw_MouseDown;
 
             //Refresh the plot
-            theChargeModel.InvalidatePlot(true);
+            //theChargeModel.InvalidatePlot(true);
         }
         //Clears all the values from the plot
         internal void ClearPlot()
@@ -414,10 +485,11 @@ namespace BattPlot
             theChargeModel.InvalidatePlot(true);
         }
         //Removes the scatter series that matches int parameter
+        //int value comes from listbox selection
         public void RemoveScatterSeries(int seriestoremove)
         {
             //check is series to remove is in range of what is currently in the list
-            if ((theChargeModel.Series.Count - 1) >= seriestoremove && (seriestoremove >= 0) )
+            if ((theChargeModel.Series.Count - 1) >= seriestoremove && (seriestoremove >= 0))
             {
                 theChargeModel.Series.RemoveAt(seriestoremove);
                 //Refresh the plot
@@ -445,7 +517,7 @@ namespace BattPlot
         //db functionality here
         //This is the selcted testrun that comes from listBox3 Mainwindow
         //public int SelectedDBTesrun { get; set; } = -1;
-        //The X data for upcoming plots, set from gui
+        //The X data for upcoming plots, set from gui interface
         public string xaxisPlotValues { get; set; }
         //used to build the ttile of the plot
         //private string titleBuilderTempr;

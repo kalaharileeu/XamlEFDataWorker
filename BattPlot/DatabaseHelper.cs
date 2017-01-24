@@ -118,7 +118,6 @@ namespace BattPlot
                         if (!(testpoint_fields[i].Name.Contains("ID") || testpoint_fields[i].Name.Contains("Testrun")))
                         {
                             //Return without populating the Repo, columns does not match property
-                            //WriteLine("Oops returning without populating. {0}", testpoint_fields[i].Name);
                             return;
                         }
                     }
@@ -173,7 +172,6 @@ namespace BattPlot
                 }
             }
         }
-
         ///Programming directly aganist the context here not using GetAll Call
         ///from the repo
         ///There is not much difference betwween doing this and coding directly

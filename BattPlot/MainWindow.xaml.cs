@@ -26,14 +26,14 @@ namespace BattPlot
             InitializeComponent();
             //This only gets loaded once and not reloaded on new csv file load
             //It is just data desciptions and column names
-
             //XmlManager<DataColumns> columnloader = new XmlManager<DataColumns>();
             ////Initialize the datacolumns class with the wanted columns
-            //datacolumns = columnloader.Load("Content/XMLFile1.xml");
-
             //The csvinterface wrap alot of the dll functionality
-            csvinterface = new CSVinterface("Content/XMLFile1.xml");
-
+            csvinterface = new CSVinterface();
+            csvinterface.InitializeXmlDataModels("Content/XMLFile1.xml");
+            //skip data
+            csvinterfaceskips = new CSVinterface();
+            csvinterfaceskips.InitializeXmlDataModels("Content/XMLFileSkips.xml");
             //Populate data in listbox
             populateListBox();//Yaxis variable
             polulateListBox1();//Filter variable
@@ -44,6 +44,7 @@ namespace BattPlot
             ///Add a private property of our view model and
             ///initiate this property in the constructor.
             theChargeModel = new ChargeModel();
+            theSkipModel = new SkipModel();
             //register with delegate events for plotmodel
             //theChargeModel.RegisterWithPlotModelStatus(new ChargeModel.PlotModelStatusHandler(OnPlotModelStatusEvent));
             //Syntax Shortcut below (Method group conversion synatx)
@@ -79,6 +80,15 @@ namespace BattPlot
             {
                 Console.WriteLine("The datacolumns capacity is:" + csvinterface.CSVMetaAndColumndata.Count);
                 csvinterface.LoadCSVdata(filename);
+            }
+            //Polulate skip test data
+            if (csvinterfaceskips.CSVMetaAndColumndata != null)
+            {
+                Console.WriteLine("The datacolumns capacity is:" + csvinterfaceskips.CSVMetaAndColumndata.Count);
+                csvinterfaceskips.LoadCSVdata(filename);
+                //Process skip data
+                theSkipModel.Setup(csvinterfaceskips.CSVMetaAndColumndata);
+                
             }
         }
         /// <summary>
@@ -123,7 +133,6 @@ namespace BattPlot
             listBox2.Items.Add(new ListBoxItem() { Content = "Vacpowermeter" });
             listBox2.Items.Add(new ListBoxItem() { Content = "Phaseconfigured" });
             listBox2.Items.Add(new ListBoxItem() { Content = "Temperature" });
-
         }
 
         //Add info text to richtextbox and image tags
@@ -176,7 +185,7 @@ namespace BattPlot
             textBox5.Text = "100";//set tempperature to all to plot all temperatures
         }
         //give the plotmodel something to plot and a reference to the data
-        //or plots from db is the Database checkbox was selected
+        //or plots from db if the Database checkbox was selected
         private void plotmodeladdscatter()
         {
             //update chargemodel with latest limit values in textboxes
@@ -187,6 +196,8 @@ namespace BattPlot
             {
                 //Send the string name of the wanted item and a reference to all the columns data
                 theChargeModel.addScatterSeries(selectedPlotItem_Latest, csvinterface.CSVMetaAndColumndata);
+                //Skips add
+                plotmodeladdskips();
             }
             else
             {
@@ -200,6 +211,14 @@ namespace BattPlot
             if (!listBox1.Items.IsEmpty) { listBox1.Items.Clear(); }
             //repopulates all the filter selections in listBox1
             polulateListBox1();
+        }
+        /// <summary>
+        /// Add skips to the plot model
+        /// </summary>
+        private void plotmodeladdskips()
+        {
+            //Pass in the selected plot item and the CSV data references
+            theChargeModel.AddSkipsLines(selectedPlotItem_Latest, csvinterface.CSVMetaAndColumndata, csvinterfaceskips.CSVMetaAndColumndata);
         }
         //use this function to verufy the key strike in the filter textboxes
         private void previewKeyVerify(Key k)
@@ -635,12 +654,16 @@ namespace BattPlot
         int selected_Testrun_id;
 
         //Csv interface lives in CSVanalyzer.dll
-        CSVinterface csvinterface;
-
+        private CSVinterface csvinterface;
+        //csv interface class for skips
+        private CSVinterface csvinterfaceskips;
+        //Skip model works with csvinterfaceskips data
+        private SkipModel theSkipModel;
         /// Interaction logic for MainWindow.xaml
         private ChargeModel theChargeModel;
         //The latest plot item that was selected from
         //listbox that the user want to look at
+        //Y-axis data selection. The charge model needs this for skip plos 
         private string selectedPlotItem_Latest;
         private string accuracydir;
         //timer for the popup
