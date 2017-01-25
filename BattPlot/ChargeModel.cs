@@ -147,7 +147,7 @@ namespace BattPlot
             else
             {
                 //get the Y compare data, copy constructor NOT used used
-                Ycomparefloats = Ycompare.GetFloats;
+                Ycomparefloats = new List<float>(Ycompare.GetFloats);
             }
 
             //Modify value if needed
@@ -206,12 +206,9 @@ namespace BattPlot
             plotTitleBuilder("CSV.", dataY);
             //titleBuilderColumnName = valuelist.GetName();
             List<float> dataYList = new List<float>();
-            //The list that holds the benchmark data for the dataYList
             //this is most likely power meter data
             List<float> dataYcompare = new List<float>();
-            //add Lamda to find value can also use LINQ
-            //X value! Find. xaxisPlotValues is the wanted x value
-            //xaxisPlotValue is selected by the user
+            //xaxisPlotValue is selected by the user, LINQ or lambda
             var temp_column = vList.Find(x => x.alias == xaxisPlotValues);
             List<float> dataXList = temp_column.GetFloats;
             //Scale value if needed
@@ -475,7 +472,7 @@ namespace BattPlot
             //acwFilteredSeries.MouseDown += acw_MouseDown;
 
             //Refresh the plot
-            //theChargeModel.InvalidatePlot(true);
+            theChargeModel.InvalidatePlot(true);
         }
         //Clears all the values from the plot
         internal void ClearPlot()

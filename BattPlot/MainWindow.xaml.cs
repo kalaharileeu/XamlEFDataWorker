@@ -78,17 +78,14 @@ namespace BattPlot
         {
             if (csvinterface.CSVMetaAndColumndata != null)
             {
-                Console.WriteLine("The datacolumns capacity is:" + csvinterface.CSVMetaAndColumndata.Count);
                 csvinterface.LoadCSVdata(filename);
             }
             //Polulate skip test data
             if (csvinterfaceskips.CSVMetaAndColumndata != null)
             {
-                Console.WriteLine("The datacolumns capacity is:" + csvinterfaceskips.CSVMetaAndColumndata.Count);
                 csvinterfaceskips.LoadCSVdata(filename);
                 //Process skip data
                 theSkipModel.Setup(csvinterfaceskips.CSVMetaAndColumndata);
-                
             }
         }
         /// <summary>
@@ -98,13 +95,9 @@ namespace BattPlot
         private void populateListBox()
         {
             foreach (Column c in csvinterface.CSVMetaAndColumndata )
-            {
                 //only add pcu values for plotting but not if is contains "NOFF" && "imag"
                 if (c.alias.Contains("pcu") && !(c.alias.Contains("NOFF")) && !(c.alias.Contains("Iacimag")))
-                {
                     listBox.Items.Add(new ListBoxItem() { Content = c.alias });
-                }
-            }
         }
         /// <summary>
         /// Populate ListBox1 with some filter values. There is a 5 filter for now
@@ -332,7 +325,7 @@ namespace BattPlot
         /// <summary>
         /// Database acces user interface start here
         /// Database Testrun diplayed in the listBox 3
-        /// I select a item I want to be able to plot the values form historical data
+        ///Select a item to plot
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
@@ -533,16 +526,16 @@ namespace BattPlot
         private void button3_Click(object sender, RoutedEventArgs e)
         {
             //disable button3 while busy
-            button3.IsEnabled = false;
+            //button3.IsEnabled = false;
             if (textBox6.Text != "")
             {
                 //Need the full csv file name here
                 loadrepos(textBox6.Text);
             }
             //update list box 3 to display the new data
-            populateListBox3();
-            //Enable button 2 again.
-            button3.IsEnabled = true;
+            //populateListBox3();
+            ////Enable button 2 again.
+            //button3.IsEnabled = true;
         }
 
         //DocumentX. This button event handler will try and create the document

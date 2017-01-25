@@ -5,6 +5,8 @@ using AccuracyDAL.Models;
 using AccuracyDAL.Repos;
 using System.Windows;
 using System.Reflection;
+using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace BattPlot
 {
@@ -14,11 +16,16 @@ namespace BattPlot
         //the testrun repo populate function: needs the full .csv link to get
         //the extra data file (.txt)
         //The testpoint repo populate function needs the TESTRUN FOREIGN KEY
-        private void loadrepos(string fullcsvfilepath)
+        private async void loadrepos(string fullcsvfilepath)
         {
+            button3.IsEnabled = false;
             //Load the testrun repo then send the reference to Testpoint repo load to load testpoints
             //The Load_TestRun_repo returns a reference to the Testrun FK.
-            Load_Testpoint_repo(Load_TestRun_repo(fullcsvfilepath));
+            await Task.Run(() => Load_Testpoint_repo(Load_TestRun_repo(fullcsvfilepath)));
+            populateListBox3();
+            //Enable button 2 again.
+            button3.IsEnabled = true;
+
         }
         /// <summary>
         /// Load data from the realpowerdictionary into Testpointrepo
@@ -27,15 +34,11 @@ namespace BattPlot
         private Testrun Load_TestRun_repo(string folderPathForTextFile)
         {
             //TODO: Get a better way to find the number of rows
-            if (csvinterface.GetColumnData("SerialNumber").Count == 0)
-            {
-                //WriteLine("NULL from testrun load");
-                return null;
-            }
+            if (csvinterface.GetColumnData("SerialNumber").Count == 0)return null;
             //Get the properties for the EF.Model
             PropertyInfo[] test_fields = AccuracyDAL.Helper.GetPropertlyArray(typeof(Testrun));
             //PropertyInfo[] test_fields = typeof(Testrun).GetProperties(BindingFlags.Public |
-            //    BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.NonPublic);
+            //BindingFlags.Instance | BindingFlags.FlattenHierarchy | BindingFlags.NonPublic);
             //Populate the data in the Testrun model, iterate through the property info
             //create a temporay test run to populate
             Testrun tempTestRun = new Testrun();
@@ -116,10 +119,9 @@ namespace BattPlot
                     {
                         //If the name contains ID that is ok, do not return, excluded from this
                         if (!(testpoint_fields[i].Name.Contains("ID") || testpoint_fields[i].Name.Contains("Testrun")))
-                        {
                             //Return without populating the Repo, columns does not match property
                             return;
-                        }
+                        
                     }
                     //If all the properties of the model match the column names, all there
                     //then continue
