@@ -34,10 +34,13 @@ namespace BattPlot
                     else
                         skipList[i].Columnvalues[j] = "0.0";
                 }
-                if (skipList[i].Columnvalues[0] != "0.0")
+                if (skipList[i].Columnvalues.Count != 0)
                 {
-                    skipList[i].Columnvalues[0] = "1.0";
-                    keeplist = true;
+                    if (skipList[i].Columnvalues[0] != "0.0")
+                    {
+                        skipList[i].Columnvalues[0] = "1.0";
+                        keeplist = true;
+                    }
                 }
                 //if the list was all 0.0, then remove it
                 //The list count now changes
