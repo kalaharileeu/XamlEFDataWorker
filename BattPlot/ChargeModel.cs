@@ -14,13 +14,6 @@ using AccuracyDAL.Repos;
 /// </summary>
 namespace BattPlot
 {
-    /// <summary>
-    /// The ChargeModel:
-    ///-Sets up a plot area
-    ///-Save the plot to a file with File stream
-    ///-Adds and populates scatter series the plot
-    ///-Remove a scatter series from plot items.
-    /// </summary>
     public class ChargeModel
     {
         //Constructor
