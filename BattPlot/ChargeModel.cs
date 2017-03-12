@@ -118,6 +118,7 @@ namespace BattPlot
         /// <param name="skipColumns">reference var to skip data</param>
         public void AddSkipsLines(string dataY, List<Column> vColumns, List<Column> skipColumns)
         {
+            if (dataY == "") return;
             //Y axis data: dataY and YColumn is the wanted Y axis data/plot
             var Ycolumn = vColumns.Find(y => y.alias == dataY);
             //no variable to comapre against for the accuracy varlues
